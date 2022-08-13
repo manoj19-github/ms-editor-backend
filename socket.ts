@@ -9,8 +9,13 @@ export default(server:http.Server)=>{
         pingTimeout:12000,
         cors:{origin:process.env.CLIENT_APP_URL}
     })
-    const allConnectedClients = (roomId:string)=>{
-        return Array.from(io.sockets.adapter.rooms.get(roomId) || []);
+    const allConnectedClients = (roomId:string,mySocketId:string)=>{
+        return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map((socketId)=>{
+            return{
+                socketId,
+                userName:userSocketMap[socketId],
+            }
+        });
     }
     IO = io.on("connection",(socket:Socket)=>{
         console.log(`connected to socket io on ms-editor`)
@@ -19,10 +24,25 @@ export default(server:http.Server)=>{
             console.log(message)
         })
         socket.on(SOCKET_ACTIONS.JOIN,({roomId,userName}:{roomId:string;userName:string})=>{
-            socket.join(roomId);
-            userSocketMap[userName] = socket.id;
-            const clients = allConnectedClients(roomId);
+            if(!Object.entries(userSocketMap)?.find(([key,value])=>{
+                return value===userName
+            })){
+                socket.join(roomId);
+                console.log("socket joined")
+                userSocketMap[socket.id] = userName;
+                console.log("all socket4 : ",userSocketMap,socket.id)
+                const clients = allConnectedClients(roomId,socket.id);
+                clients.forEach(({socketId})=>{
+                    return io.to(socketId).emit(SOCKET_ACTIONS.JOINED,{
+                        _userName:userName,
+                        clients,
+                        socketId:socket.id
+                        
+                    })
+                })
+            }
         })
+        console.log("all socket : ",userSocketMap)
         return io;
     })
 }
