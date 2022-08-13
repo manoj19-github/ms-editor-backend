@@ -1,8 +1,15 @@
 import http from "http";
+import { stringify } from "querystring";
 import {Server,Socket} from "socket.io";
 import { SOCKET_ACTIONS } from "./utils/socketAction";
 let IO:any;
 const userSocketMap = {}
+interface ILangOption{
+    id:number;
+    name:string;
+    label:string;
+    value:string;
+  }
 
 export default(server:http.Server)=>{
     const io = new Server(server,{
@@ -42,6 +49,29 @@ export default(server:http.Server)=>{
                 })
             }
         })
+        socket.on(SOCKET_ACTIONS.SYNC_CODE,({myCode,_userName,roomId}:{myCode:string,_userName:string,roomId:string})=>{
+            console.log("sync code : ",myCode,roomId)
+            socket.in(roomId).emit(SOCKET_ACTIONS.CODE_CHANGED,{myCode,_userName})
+        })
+        socket.on(SOCKET_ACTIONS.LANG_CHANGING,({newLang,_userName,roomId}
+            :{newLang:ILangOption,_userName:string,roomId:string})=>{ 
+                console.log("lannge changed : ",newLang)
+                socket.in(roomId).emit(SOCKET_ACTIONS.LANG_CHANGED,{newLang,_userName})
+        })
+        // disconnec the socket
+        socket.on("disconnecting",()=>{
+            const roomsArray = Array.from(socket.rooms);
+            roomsArray.forEach((roomId)=>{
+                socket.in(roomId).emit(SOCKET_ACTIONS.DISCONNECTED,{
+                    socketId:socket.id,
+                    _userName:userSocketMap[socket.id]
+                })
+            })
+            delete userSocketMap[socket.id];
+            socket.leave(roomsArray[0]);
+        })
+      
+        
         console.log("all socket : ",userSocketMap)
         return io;
     })
