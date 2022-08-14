@@ -70,6 +70,10 @@ export default(server:http.Server)=>{
             delete userSocketMap[socket.id];
             socket.leave(roomsArray[0]);
         })
+        socket.on(SOCKET_ACTIONS.LEAVE,({roomId,_userName})=>{
+            socket.in(roomId).emit(SOCKET_ACTIONS.DISCONNECTED,{socketId:socket.id,_userName})
+
+        })
       
         
         console.log("all socket : ",userSocketMap)
