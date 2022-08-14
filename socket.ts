@@ -37,7 +37,7 @@ export default(server:http.Server)=>{
                 socket.join(roomId);
                 console.log("socket joined")
                 userSocketMap[socket.id] = userName;
-                console.log("all socket4 : ",userSocketMap,socket.id)
+           
                 const clients = allConnectedClients(roomId,socket.id);
                 clients.forEach(({socketId})=>{
                     return io.to(socketId).emit(SOCKET_ACTIONS.JOINED,{
@@ -50,13 +50,17 @@ export default(server:http.Server)=>{
             }
         })
         socket.on(SOCKET_ACTIONS.SYNC_CODE,({myCode,_userName,roomId}:{myCode:string,_userName:string,roomId:string})=>{
-            console.log("sync code : ",myCode,roomId)
+
             socket.in(roomId).emit(SOCKET_ACTIONS.CODE_CHANGED,{myCode,_userName})
         })
         socket.on(SOCKET_ACTIONS.LANG_CHANGING,({newLang,_userName,roomId}
             :{newLang:ILangOption,_userName:string,roomId:string})=>{ 
-                console.log("lannge changed : ",newLang)
+           
                 socket.in(roomId).emit(SOCKET_ACTIONS.LANG_CHANGED,{newLang,_userName})
+        })
+        socket.on(SOCKET_ACTIONS.COMPILE_REQ,({roomId,_userName}:{roomId:string,_userName:string})=>{
+            socket.in(roomId).emit(SOCKET_ACTIONS.COMPILING,{_userName})
+
         })
         // disconnec the socket
         socket.on("disconnecting",()=>{
@@ -74,9 +78,6 @@ export default(server:http.Server)=>{
             socket.in(roomId).emit(SOCKET_ACTIONS.DISCONNECTED,{socketId:socket.id,_userName})
 
         })
-      
-        
-        console.log("all socket : ",userSocketMap)
         return io;
     })
 }

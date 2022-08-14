@@ -10,5 +10,7 @@ export const SOCKET_ACTIONS = {
     THEME_CHANGING:'theme_changing',
     LANG_CHANGING:'lang_changing',
     THEME_CHANGED:'theme_changed',
-    LANG_CHANGED:'lang_changed'
+    LANG_CHANGED:'lang_changed',
+    COMPILE_REQ:'compile_req',
+    COMPILING:'compiling'
 }
